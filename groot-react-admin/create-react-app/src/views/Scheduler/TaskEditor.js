@@ -15,7 +15,7 @@ const TaskEditor = (props) => {
   const focusRef = React.useRef({});
 
   useEffect(() => {
-    if (props.isFocused) focusRef.current.focus();
+    if (props.id == props.subCreatedTaskId) focusRef.current.focus();
   }, [props.isFocused]);
 
   const taskStatusChange = (event) => {
@@ -140,7 +140,10 @@ const TaskEditor = (props) => {
           <MenuItem value={'연기'}>연기</MenuItem>
         </Select>
       </Grid>
-      <Grid item xs={8}>
+      <Grid item xs={1}>
+        {props.isFocused.toString()} : {props.subCreatedTaskId} : {props.task.id}
+      </Grid>
+      <Grid item xs={7}>
         <TextField
           ref={focusRef}
           fullWidth
@@ -152,6 +155,7 @@ const TaskEditor = (props) => {
           }}
           onKeyDown={handleEnterKey}
           size={'small'}
+          id={`task-${props.task.id}`}
         ></TextField>
       </Grid>
 
@@ -182,7 +186,8 @@ TaskEditor.propTypes = {
   deleteTask: PropTypes.func.isRequired,
   getLowestPriority: PropTypes.func.isRequired,
   addNextTask: PropTypes.func.isRequired,
-  isFocused: PropTypes.bool.isRequired
+  isFocused: PropTypes.bool.isRequired,
+  subCreatedTaskId: PropTypes.string.isRequired
 };
 
 export default TaskEditor;

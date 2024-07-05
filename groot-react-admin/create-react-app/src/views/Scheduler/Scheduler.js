@@ -104,8 +104,19 @@ export default function Scheduler() {
 
   useEffect(() => {
     getMemAndTasks(getInitDate()?.$d);
+    if (createdTaskId !== -1) {
+      setTimeout(() => {
+        const element = document.getElementById(`task-${createdTaskId}`);
+        console.log(`task-${createdTaskId}`);
+        console.log(element);
+        if (element) {
+          element.focus();
+          console.log(`task-${createdTaskId} focused`);
+        }
+      }, 0);
+    }
     return () => {};
-  }, []);
+  }, [createdTaskId]);
 
   const getLowestPriority = (importance) => {
     let lowestPriority = -1;
@@ -443,6 +454,7 @@ export default function Scheduler() {
                 getLowestPriority={getLowestPriority.bind(this)}
                 addNextTask={plusClick.bind(this)}
                 isFocused={createdTaskId === v.id}
+                subCreatedTaskId={createdTaskId}
               />
             ))}
             <Grid item xs={12}>
