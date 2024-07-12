@@ -12,7 +12,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import TaskEditor from './TaskEditor';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
@@ -90,7 +90,7 @@ export default function Scheduler() {
   };
 
   const getMemAndTasks = async (date) => {
-    console.log('getMemAndTasks:date ' + toStringByFormatting(date));
+    // console.log('getMemAndTasks:date ' + toStringByFormatting(date));
     // axios.defaults.withCredentials = true;
     const urlStr = process.env.REACT_APP_API_URL + '/task/tasks?date=' + toStringByFormatting(date) + '&uid=' + getUid();
     try {
@@ -104,19 +104,8 @@ export default function Scheduler() {
 
   useEffect(() => {
     getMemAndTasks(getInitDate()?.$d);
-    if (createdTaskId !== -1) {
-      setTimeout(() => {
-        const element = document.getElementById(`task-${createdTaskId}`);
-        console.log(`task-${createdTaskId}`);
-        console.log(element);
-        if (element) {
-          element.focus();
-          console.log(`task-${createdTaskId} focused`);
-        }
-      }, 0);
-    }
     return () => {};
-  }, [createdTaskId]);
+  }, []);
 
   const getLowestPriority = (importance) => {
     let lowestPriority = -1;
@@ -160,7 +149,7 @@ export default function Scheduler() {
     }
 
     let result = isMaxPriority(task.priority, task.importance);
-    console.log('isSouthDisabled', getMaxPriority(task.importance), result, task.priority, task.importance, task.text);
+    // console.log('isSouthDisabled', getMaxPriority(task.importance), result, task.priority, task.importance, task.text);
     return result;
     // return isMaxPriority(task.priority, task.importance);
 
@@ -172,17 +161,17 @@ export default function Scheduler() {
     // return isMinPriority(task.priority, task.importance);
   };
 
-  const getMaxPriority = (importance) => {
-    let maxPriority = 0;
-    tasks.map((v) => {
-      if (v.importance === importance) {
-        if (maxPriority < v.priority && v.priority < 10000) {
-          maxPriority = v.priority;
-        }
-      }
-    });
-    return maxPriority;
-  };
+  // const getMaxPriority = (importance) => {
+  //   let maxPriority = 0;
+  //   tasks.map((v) => {
+  //     if (v.importance === importance) {
+  //       if (maxPriority < v.priority && v.priority < 10000) {
+  //         maxPriority = v.priority;
+  //       }
+  //     }
+  //   });
+  //   return maxPriority;
+  // };
 
   const isMaxPriority = (priority, importance) => {
     let maxPriority = 0;
@@ -392,6 +381,9 @@ export default function Scheduler() {
         }
       });
   };
+
+  const refs = useRef(tasks.map(() => React.createRef())); // 각 TaskEditor에 대한 참조 배열 생성
+
   return (
     <MainCard title="to do list">
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
@@ -409,7 +401,6 @@ export default function Scheduler() {
               </Button>
               {/*<TextField fullWidth={true}></TextField>*/}
             </Grid>
-
             <Grid item xs={1}>
               <Button size="small" variant="contained" fullWidth onClick={previousDayPick}>
                 <NavigateBeforeIcon />
@@ -437,26 +428,29 @@ export default function Scheduler() {
               {/*<TextField fullWidth={true}></TextField>*/}
             </Grid>
             <Grid item xs={6}></Grid>
-
-            {tasks.map((v) => (
-              <TaskEditor
-                key={v.id}
-                task={v}
-                isNorthDisabled={isNorthDisabled(v)}
-                isSouthDisabled={isSouthDisabled(v)}
-                // saveTask={saveTaskByScheduler.bind(this)}
-                moveNorth={moveNorthBySch.bind(this)}
-                moveSouth={moveSouthBySch.bind(this)}
-                saveContent={saveContentByScheduler.bind(this)}
-                saveImportance={saveImportanceByScheduler.bind(this)}
-                saveStatus={saveStatusByScheduler.bind(this)}
-                deleteTask={deleteTaskByScheduler.bind(this)}
-                getLowestPriority={getLowestPriority.bind(this)}
-                addNextTask={plusClick.bind(this)}
-                isFocused={createdTaskId === v.id}
-                subCreatedTaskId={createdTaskId}
-              />
-            ))}
+            {tasks.map((v, index) => {
+              // eslint-disable-next-line react-hooks/rules-of-hooks
+              return (
+                <TaskEditor
+                  key={v.id}
+                  task={v}
+                  isNorthDisabled={isNorthDisabled(v)}
+                  isSouthDisabled={isSouthDisabled(v)}
+                  moveNorth={moveNorthBySch.bind(this)}
+                  moveSouth={moveSouthBySch.bind(this)}
+                  saveContent={saveContentByScheduler.bind(this)}
+                  saveImportance={saveImportanceByScheduler.bind(this)}
+                  saveStatus={saveStatusByScheduler.bind(this)}
+                  deleteTask={deleteTaskByScheduler.bind(this)}
+                  getLowestPriority={getLowestPriority.bind(this)}
+                  addNextTask={plusClick.bind(this)}
+                  isFocused={createdTaskId === v.id}
+                  subCreatedTaskId={createdTaskId}
+                  nextTaskRef={index < tasks.length - 1 ? refs.current[index + 1] : null} // 다음 TaskEditor에 대한 참조 전달
+                  ref={refs.current[index]} // 현재 TaskEditor에 대한 참조 전달
+                />
+              );
+            })}{' '}
             <Grid item xs={12}>
               <div hidden={unSaved}> * </div>
               <CKEditor

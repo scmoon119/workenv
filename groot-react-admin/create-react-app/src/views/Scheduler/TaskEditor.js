@@ -3,20 +3,18 @@ import { Button, IconButton, MenuItem, Select, TextField } from '@mui/material';
 import * as React from 'react';
 import NorthIcon from '@mui/icons-material/North';
 import SouthIcon from '@mui/icons-material/South';
-import { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useRef, useEffect } from 'react'; // 추가된 부분
 
 const TaskEditor = (props) => {
+  // forwardRef 제거
+  const textFieldRef = useRef(null);
+
   const [id] = React.useState(props.task.id);
   const [importance, setImportance] = React.useState(props.task.importance);
   // const [priority] = React.useState(props.task.priority);
   const [taskStatus, setTaskStatus] = React.useState(props.task.taskStatus);
   const [text] = React.useState(props.task.text);
-  const focusRef = React.useRef({});
-
-  useEffect(() => {
-    if (props.id == props.subCreatedTaskId) focusRef.current.focus();
-  }, [props.isFocused]);
 
   const taskStatusChange = (event) => {
     const taskStatus = event.target.value;
@@ -77,8 +75,18 @@ const TaskEditor = (props) => {
     if (event.key === 'Enter') {
       updateText(event.target.value);
       props.addNextTask();
+    } else if (event.key === 'ArrowDown') {
+      if (props.nextTaskRef && props.nextTaskRef.current) {
+        console.log('arrow down');
+        props.nextTaskRef.current.focus();
+      }
     }
   }
+  useEffect(() => {
+    if (props.isFocused && textFieldRef.current) {
+      textFieldRef.current.focus();
+    }
+  }, [props.isFocused]);
 
   return (
     <>
@@ -140,12 +148,8 @@ const TaskEditor = (props) => {
           <MenuItem value={'연기'}>연기</MenuItem>
         </Select>
       </Grid>
-      <Grid item xs={1}>
-        {props.isFocused.toString()} : {props.subCreatedTaskId} : {props.task.id}
-      </Grid>
-      <Grid item xs={7}>
+      <Grid item xs={8}>
         <TextField
-          ref={focusRef}
           fullWidth
           defaultValue={props.task.text}
           disabled={getTextDisabled()}
@@ -154,8 +158,8 @@ const TaskEditor = (props) => {
             updateText(event.target.value);
           }}
           onKeyDown={handleEnterKey}
+          inputRef={textFieldRef} // 추가된 부분
           size={'small'}
-          id={`task-${props.task.id}`}
         ></TextField>
       </Grid>
 
@@ -187,7 +191,7 @@ TaskEditor.propTypes = {
   getLowestPriority: PropTypes.func.isRequired,
   addNextTask: PropTypes.func.isRequired,
   isFocused: PropTypes.bool.isRequired,
-  subCreatedTaskId: PropTypes.string.isRequired
+  nextTaskRef: PropTypes.object // 새로운 속성 추가
 };
 
 export default TaskEditor;

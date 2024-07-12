@@ -16,9 +16,13 @@ import com.sindory.workenv.repository.TaskQuerydslRepository
 import com.sindory.workenv.repository.TaskRepository
 import jakarta.transaction.Transactional
 import mu.KotlinLogging
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.Sort
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import java.util.*
 
 
@@ -127,6 +131,7 @@ class TaskService (
         return ResponseEntity.ok().body(response)
     }
 
+    @Transactional
     fun updateTaskByContent(request: UpdateTaskByContentRequest): ResponseEntity<SaveResultResponse>? {
         var response = SaveResultResponse()
         var findByTaskId = taskRepository.findByTaskId(request.id);
@@ -136,12 +141,26 @@ class TaskService (
             return ResponseEntity.badRequest().body(response)
         }
 
+        if(findByTaskId.content.equals(request.content)){
+            response.message = "same content."
+            return ResponseEntity.ok().body(response)
+        }
+
         findByTaskId.content = request.content;
-        taskRepository.save(findByTaskId);
-
-        response.message = "OK"
-        return ResponseEntity.ok().body(response)
-
+        return try {
+            taskRepository.save(findByTaskId)
+            response.message = "OK"
+            ResponseEntity.ok().body(response)
+        } catch (e: ObjectOptimisticLockingFailureException) {
+            response.message = "다른 트랜잭션에 의해 작업이 업데이트되거나 삭제되었습니다."
+            ResponseEntity.status(HttpStatus.CONFLICT).body(response)
+        } catch (e: DataIntegrityViolationException) {
+            response.message = "데이터 무결성 위반: ${e.message}"
+            ResponseEntity.status(HttpStatus.CONFLICT).body(response)
+        }catch (e:Exception){
+            response.message = "error:" + e.toString();
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
+        }
     }
 
     @Transactional
