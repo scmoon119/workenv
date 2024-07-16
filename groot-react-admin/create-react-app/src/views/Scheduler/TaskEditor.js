@@ -4,11 +4,10 @@ import * as React from 'react';
 import NorthIcon from '@mui/icons-material/North';
 import SouthIcon from '@mui/icons-material/South';
 import PropTypes from 'prop-types';
-import { useRef, useEffect } from 'react'; // 추가된 부분
+import { useEffect } from 'react'; // 추가된 부분
 
 const TaskEditor = (props) => {
   // forwardRef 제거
-  const textFieldRef = useRef(null);
 
   const [id] = React.useState(props.task.id);
   const [importance, setImportance] = React.useState(props.task.importance);
@@ -72,16 +71,27 @@ const TaskEditor = (props) => {
   };
 
   function handleEnterKey(event) {
+    if (event.isComposing || event.keyCode === 229) return;
     if (event.key === 'Enter') {
       updateText(event.target.value);
       props.addNextTask();
     } else if (event.key === 'ArrowDown') {
+      console.log('arrowDown');
+      console.log('props.nextTaskRef:' + props.nextTaskRef);
+      console.log('props.thisRef:' + props.thisRef);
       if (props.nextTaskRef && props.nextTaskRef.current) {
-        console.log('arrow down');
         props.nextTaskRef.current.focus();
+      }
+    } else if (event.key === 'ArrowUp') {
+      console.log('arrow up');
+      console.log('props.prevTaskRef:' + props.prevTaskRef);
+      console.log('props.thisRef:' + props.thisRef);
+      if (props.prevTaskRef && props.prevTaskRef.current) {
+        props.prevTaskRef.current.focus();
       }
     }
   }
+
   useEffect(() => {
     if (props.isFocused && textFieldRef.current) {
       textFieldRef.current.focus();
@@ -158,7 +168,7 @@ const TaskEditor = (props) => {
             updateText(event.target.value);
           }}
           onKeyDown={handleEnterKey}
-          inputRef={textFieldRef} // 추가된 부분
+          inputRef={props.thisRef} // 추가된 부분
           size={'small'}
         ></TextField>
       </Grid>
@@ -191,7 +201,9 @@ TaskEditor.propTypes = {
   getLowestPriority: PropTypes.func.isRequired,
   addNextTask: PropTypes.func.isRequired,
   isFocused: PropTypes.bool.isRequired,
-  nextTaskRef: PropTypes.object // 새로운 속성 추가
+  nextTaskRef: PropTypes.object, // 새로운 속성 추가,
+  prevTaskRef: PropTypes.object, // 새로운 속성 추가
+  thisRef: PropTypes.object
 };
 
 export default TaskEditor;

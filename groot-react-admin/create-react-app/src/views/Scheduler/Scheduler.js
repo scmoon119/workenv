@@ -29,6 +29,7 @@ export default function Scheduler() {
   const [unSaved, setUnSaved] = React.useState(false);
   const [cookies, ,] = useCookies(['uid']);
   const [createdTaskId, setCreatedTaskId] = React.useState(-1);
+  // const [refs, setRefs] = React.useState([]);
 
   const getInitDate = () => {
     return dayjs(Date());
@@ -83,7 +84,10 @@ export default function Scheduler() {
       for (const task of data.taskList.filter((t) => isUnDoneStatus(t.status))) {
         taskList = [...taskList, getModifiedTask(task)];
       }
+
       setTasks(taskList);
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      // 각 TaskEditor에 대한 참조 배열 생성
     } else {
       alert(data?.message);
     }
@@ -104,6 +108,7 @@ export default function Scheduler() {
 
   useEffect(() => {
     getMemAndTasks(getInitDate()?.$d);
+    console.log(refs);
     return () => {};
   }, []);
 
@@ -447,7 +452,8 @@ export default function Scheduler() {
                   isFocused={createdTaskId === v.id}
                   subCreatedTaskId={createdTaskId}
                   nextTaskRef={index < tasks.length - 1 ? refs.current[index + 1] : null} // 다음 TaskEditor에 대한 참조 전달
-                  ref={refs.current[index]} // 현재 TaskEditor에 대한 참조 전달
+                  prevTaskRef={index > 0 ? refs.current[index - 1] : null} // 이전 TaskEditor에 대한 참조 전달
+                  thisRef={refs.current[index]} // 현재 TaskEditor에 대한 참조 전달
                 />
               );
             })}{' '}
